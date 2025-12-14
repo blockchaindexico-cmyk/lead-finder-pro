@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mail, Phone, Globe, MapPin, Star, Building, ExternalLink, Search, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,14 @@ export function LeadCard({ lead, index, onEmailFound, isSaved, onSave, onRemove,
 
         <div className="space-y-3">
           {/* Email Section */}
-          {lead.email && lead.email !== 'Not available' ? (
+          {lead.emailLoading ? (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/10">
+                <Mail className="h-4 w-4 text-accent" />
+              </div>
+              <Skeleton className="h-4 w-32" />
+            </div>
+          ) : lead.email && lead.email !== 'Not available' ? (
             <a
               href={`mailto:${lead.email}`}
               className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors group"

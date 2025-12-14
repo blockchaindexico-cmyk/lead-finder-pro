@@ -34,11 +34,41 @@ const Index = () => {
         throw new Error(data.error);
       }
 
-      const results = data.leads || [];
+      const results: Lead[] = (data.leads || []).map((lead: Lead) => ({
+        ...lead,
+        emailLoading: lead.website && lead.website !== 'Not available' ? true : false,
+      }));
       setLeads(results);
+      setIsLoading(false);
+      
       toast({
         title: "Leads extracted successfully!",
         description: `Found ${results.length} leads for "${params.keyword}" in ${params.location}`,
+      });
+
+      // Fetch emails in background for leads with websites
+      results.forEach(async (lead) => {
+        if (lead.website && lead.website !== 'Not available' && !lead.email) {
+          try {
+            const { data: emailData } = await supabase.functions.invoke('extract-email', {
+              body: { websiteUrl: lead.website },
+            });
+            
+            if (emailData?.email) {
+              setLeads(prev => prev.map(l => 
+                l.id === lead.id ? { ...l, email: emailData.email, emailLoading: false } : l
+              ));
+            } else {
+              setLeads(prev => prev.map(l => 
+                l.id === lead.id ? { ...l, emailLoading: false } : l
+              ));
+            }
+          } catch {
+            setLeads(prev => prev.map(l => 
+              l.id === lead.id ? { ...l, emailLoading: false } : l
+            ));
+          }
+        }
       });
     } catch (error) {
       console.error('Search error:', error);

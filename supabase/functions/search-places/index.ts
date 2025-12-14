@@ -175,21 +175,12 @@ serve(async (req) => {
           }
 
           const websiteUrl = details.websiteUri;
-          let email: string | null = null;
 
-          // Try quick email scraping if website is available
-          if (websiteUrl && websiteUrl !== 'Not available') {
-            console.log(`Quick scraping email from: ${websiteUrl}`);
-            email = await scrapeEmailFromWebsite(websiteUrl);
-            if (email) {
-              console.log(`Found email: ${email}`);
-            }
-          }
-
+          // Return immediately without email scraping - emails will be fetched on-demand
           return {
             id: details.id || place.id,
             name: details.displayName?.text || place.displayName?.text || 'Unknown',
-            email: email,
+            email: null, // Email will be fetched on-demand via background process
             phone: details.internationalPhoneNumber || details.nationalPhoneNumber || 'Not available',
             website: websiteUrl || 'Not available',
             address: details.formattedAddress || place.formattedAddress || 'Not available',

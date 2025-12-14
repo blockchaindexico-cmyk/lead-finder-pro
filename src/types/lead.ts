@@ -8,6 +8,7 @@ export interface Lead {
   category: string;
   rating?: number;
   googleMapsUrl?: string;
+  emailLoading?: boolean;
 }
 
 export interface SearchParams {
