@@ -1,27 +1,22 @@
 import { useState } from "react";
-import { Mail, Phone, Globe, MapPin, Star, Building, ExternalLink, Search, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Mail, Phone, Globe, MapPin, Star, Building, ExternalLink, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/types/lead";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 interface LeadCardProps {
   lead: Lead;
   index: number;
-  onEmailFound?: (leadId: string, email: string) => void;
   isSaved?: boolean;
   onSave?: (lead: Lead) => Promise<boolean>;
   onRemove?: (lead: Lead) => Promise<boolean>;
   showSaveButton?: boolean;
 }
 
-export function LeadCard({ lead, index, onEmailFound, isSaved, onSave, onRemove, showSaveButton = true }: LeadCardProps) {
-  const [isSearchingEmail, setIsSearchingEmail] = useState(false);
+export function LeadCard({ lead, index, isSaved, onSave, onRemove, showSaveButton = true }: LeadCardProps) {
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
 
   const handleSaveToggle = async () => {
     setIsSaving(true);
@@ -33,49 +28,6 @@ export function LeadCard({ lead, index, onEmailFound, isSaved, onSave, onRemove,
       }
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleSearchEmail = async () => {
-    if (!lead.website || lead.website === 'Not available') {
-      toast({
-        title: "No website available",
-        description: "Cannot search for email without a website.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSearchingEmail(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('extract-email', {
-        body: { websiteUrl: lead.website },
-      });
-
-      if (error) throw new Error(error.message);
-
-      if (data.email) {
-        onEmailFound?.(lead.id, data.email);
-        toast({
-          title: "Email found!",
-          description: `Found: ${data.email}`,
-        });
-      } else {
-        toast({
-          title: "No email found",
-          description: "Could not find an email on this website.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Email extraction error:', error);
-      toast({
-        title: "Error searching for email",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearchingEmail(false);
     }
   };
 
@@ -142,29 +94,11 @@ export function LeadCard({ lead, index, onEmailFound, isSaved, onSave, onRemove,
               <span className="truncate">{lead.email}</span>
             </a>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-secondary shrink-0">
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSearchEmail}
-                disabled={isSearchingEmail || !lead.website || lead.website === 'Not available'}
-                className="h-7 text-xs"
-              >
-                {isSearchingEmail ? (
-                  <>
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-3 w-3 mr-1" />
-                    Search Email
-                  </>
-                )}
-              </Button>
+              <span>Not available</span>
             </div>
           )}
 

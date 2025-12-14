@@ -82,13 +82,6 @@ const Index = () => {
     }
   };
 
-  const handleEmailFound = (leadId: string, email: string) => {
-    setLeads(prevLeads => 
-      prevLeads.map(lead => 
-        lead.id === leadId ? { ...lead, email } : lead
-      )
-    );
-  };
 
   return (
     <div className="min-h-screen gradient-subtle">
@@ -172,7 +165,7 @@ const Index = () => {
 
         {/* Results */}
         <section className="bg-card rounded-2xl border border-border p-6 md:p-8 shadow-card animate-slide-up" style={{ animationDelay: "300ms" }}>
-          <LeadsGrid leads={leads} isLoading={isLoading} hasSearched={hasSearched} onEmailFound={handleEmailFound} />
+          <LeadsGrid leads={leads} isLoading={isLoading} hasSearched={hasSearched} />
         </section>
       </main>
 

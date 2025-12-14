@@ -18,12 +18,11 @@ interface LeadsGridProps {
   leads: Lead[];
   isLoading: boolean;
   hasSearched: boolean;
-  onEmailFound?: (leadId: string, email: string) => void;
 }
 
 const ITEMS_PER_PAGE = 30;
 
-export function LeadsGrid({ leads, isLoading, hasSearched, onEmailFound }: LeadsGridProps) {
+export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { isLeadSaved, saveLead, removeLead } = useSavedLeads();
 
@@ -166,7 +165,6 @@ export function LeadsGrid({ leads, isLoading, hasSearched, onEmailFound }: Leads
             key={lead.id} 
             lead={lead} 
             index={(currentPage - 1) * ITEMS_PER_PAGE + index} 
-            onEmailFound={onEmailFound}
             isSaved={isLeadSaved(lead)}
             onSave={saveLead}
             onRemove={removeLead}
