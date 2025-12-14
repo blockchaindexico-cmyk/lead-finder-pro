@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Zap, Database, Shield } from "lucide-react";
 import { SearchForm } from "@/components/SearchForm";
 import { LeadsGrid } from "@/components/LeadsGrid";
+import { UserMenu } from "@/components/UserMenu";
 import { Lead, SearchParams } from "@/types/lead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -60,14 +61,17 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
-              <Zap className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
+                <Zap className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">LeadExtract</h1>
+                <p className="text-xs text-muted-foreground">Business Lead Generator</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">LeadExtract</h1>
-              <p className="text-xs text-muted-foreground">Business Lead Generator</p>
-            </div>
+            <UserMenu />
           </div>
         </div>
       </header>
