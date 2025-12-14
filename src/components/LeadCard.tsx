@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Phone, Globe, MapPin, Star, Building, ExternalLink, Search, Loader2 } from "lucide-react";
+import { Mail, Phone, Globe, MapPin, Star, Building, ExternalLink, Search, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,29 @@ interface LeadCardProps {
   lead: Lead;
   index: number;
   onEmailFound?: (leadId: string, email: string) => void;
+  isSaved?: boolean;
+  onSave?: (lead: Lead) => Promise<boolean>;
+  onRemove?: (lead: Lead) => Promise<boolean>;
+  showSaveButton?: boolean;
 }
 
-export function LeadCard({ lead, index, onEmailFound }: LeadCardProps) {
+export function LeadCard({ lead, index, onEmailFound, isSaved, onSave, onRemove, showSaveButton = true }: LeadCardProps) {
   const [isSearchingEmail, setIsSearchingEmail] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  const handleSaveToggle = async () => {
+    setIsSaving(true);
+    try {
+      if (isSaved && onRemove) {
+        await onRemove(lead);
+      } else if (onSave) {
+        await onSave(lead);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSearchEmail = async () => {
     if (!lead.website || lead.website === 'Not available') {
@@ -76,12 +94,31 @@ export function LeadCard({ lead, index, onEmailFound }: LeadCardProps) {
               {lead.category}
             </Badge>
           </div>
-          {lead.rating && (
-            <div className="flex items-center gap-1 text-warning shrink-0">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="text-sm font-medium">{lead.rating.toFixed(1)}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {lead.rating && (
+              <div className="flex items-center gap-1 text-warning">
+                <Star className="h-4 w-4 fill-current" />
+                <span className="text-sm font-medium">{lead.rating.toFixed(1)}</span>
+              </div>
+            )}
+            {showSaveButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSaveToggle}
+                disabled={isSaving}
+                className={`h-8 w-8 ${isSaved ? 'text-accent' : 'text-muted-foreground hover:text-accent'}`}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isSaved ? (
+                  <BookmarkCheck className="h-4 w-4 fill-current" />
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">
