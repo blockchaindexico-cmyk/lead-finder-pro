@@ -86,7 +86,7 @@ export function LeadCard({ lead, index, onEmailFound }: LeadCardProps) {
 
         <div className="space-y-3">
           {/* Email Section */}
-          {lead.email ? (
+          {lead.email && lead.email !== 'Not available' ? (
             <a
               href={`mailto:${lead.email}`}
               className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors group"
