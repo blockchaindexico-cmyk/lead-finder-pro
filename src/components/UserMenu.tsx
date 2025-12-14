@@ -1,4 +1,5 @@
-import { LogOut, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { LogOut, User, Bookmark } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +38,13 @@ export const UserMenu = () => {
             <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/saved" className="flex items-center">
+            <Bookmark className="mr-2 h-4 w-4" />
+            Saved Leads
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />

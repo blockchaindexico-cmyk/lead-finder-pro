@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_leads: {
+        Row: {
+          created_at: string
+          id: string
+          lead_address: string | null
+          lead_category: string | null
+          lead_email: string | null
+          lead_maps_url: string | null
+          lead_name: string
+          lead_phone: string | null
+          lead_website: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_address?: string | null
+          lead_category?: string | null
+          lead_email?: string | null
+          lead_maps_url?: string | null
+          lead_name: string
+          lead_phone?: string | null
+          lead_website?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_address?: string | null
+          lead_category?: string | null
+          lead_email?: string | null
+          lead_maps_url?: string | null
+          lead_name?: string
+          lead_phone?: string | null
+          lead_website?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
