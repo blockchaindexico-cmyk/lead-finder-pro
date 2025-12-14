@@ -7,9 +7,10 @@ interface LeadsGridProps {
   leads: Lead[];
   isLoading: boolean;
   hasSearched: boolean;
+  onEmailFound?: (leadId: string, email: string) => void;
 }
 
-export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
+export function LeadsGrid({ leads, isLoading, hasSearched, onEmailFound }: LeadsGridProps) {
   const exportToCSV = () => {
     const headers = ["Name", "Email", "Phone", "Website", "Address", "Category", "Rating"];
     const csvContent = [
@@ -92,7 +93,7 @@ export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
       
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {leads.map((lead, index) => (
-          <LeadCard key={lead.id} lead={lead} index={index} />
+          <LeadCard key={lead.id} lead={lead} index={index} onEmailFound={onEmailFound} />
         ))}
       </div>
     </div>

@@ -5,30 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-
-async function extractEmailFromWebsite(websiteUrl: string): Promise<string | null> {
-  try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/extract-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ websiteUrl }),
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.email || null;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error extracting email:', error);
-    return null;
-  }
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -92,6 +68,7 @@ serve(async (req) => {
     console.log(`Found ${searchData.places.length} results, returning ${places.length}`);
 
     // Step 2: Get details for each place using Place Details (New API)
+    // Note: Email extraction is done on-demand via separate button to speed up initial search
     const leads = await Promise.all(
       places.map(async (place: any) => {
         try {
@@ -111,21 +88,12 @@ serve(async (req) => {
             return createLeadFromBasicInfo(place, keyword);
           }
 
-          const websiteUrl = details.websiteUri;
-          let email: string | null = null;
-
-          // Try to extract email from website if available
-          if (websiteUrl && websiteUrl !== 'Not available') {
-            console.log(`Extracting email from: ${websiteUrl}`);
-            email = await extractEmailFromWebsite(websiteUrl);
-          }
-
           return {
             id: details.id || place.id,
             name: details.displayName?.text || place.displayName?.text || 'Unknown',
-            email: email || 'Not available',
+            email: null, // Email extracted on-demand
             phone: details.internationalPhoneNumber || details.nationalPhoneNumber || 'Not available',
-            website: websiteUrl || 'Not available',
+            website: details.websiteUri || 'Not available',
             address: details.formattedAddress || place.formattedAddress || 'Not available',
             category: keyword,
             rating: details.rating || place.rating,
