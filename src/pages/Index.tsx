@@ -3,7 +3,7 @@ import { Zap, Database, Shield } from "lucide-react";
 import { SearchForm } from "@/components/SearchForm";
 import { LeadsGrid } from "@/components/LeadsGrid";
 import { Lead, SearchParams } from "@/types/lead";
-import { generateMockLeads } from "@/lib/mockLeads";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -17,16 +17,29 @@ const Index = () => {
     setHasSearched(true);
 
     try {
-      const results = await generateMockLeads(params);
+      const { data, error } = await supabase.functions.invoke('search-places', {
+        body: params,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const results = data.leads || [];
       setLeads(results);
       toast({
         title: "Leads extracted successfully!",
         description: `Found ${results.length} leads for "${params.keyword}" in ${params.location}`,
       });
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Error extracting leads",
-        description: "Please try again later.",
+        description: error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
     } finally {

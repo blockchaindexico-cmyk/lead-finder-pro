@@ -1,4 +1,4 @@
-import { Mail, Phone, Globe, MapPin, Star, Building } from "lucide-react";
+import { Mail, Phone, Globe, MapPin, Star, Building, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Lead } from "@/types/lead";
@@ -66,12 +66,27 @@ export function LeadCard({ lead, index }: LeadCardProps) {
             <span className="truncate">{lead.website}</span>
           </a>
 
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-secondary shrink-0">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+          {lead.googleMapsUrl ? (
+            <a
+              href={lead.googleMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors group"
+            >
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors shrink-0">
+                <MapPin className="h-4 w-4 text-accent" />
+              </div>
+              <span className="line-clamp-2 flex-1">{lead.address}</span>
+              <ExternalLink className="h-3 w-3 shrink-0" />
+            </a>
+          ) : (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-secondary shrink-0">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <span className="line-clamp-2">{lead.address}</span>
             </div>
-            <span className="line-clamp-2">{lead.address}</span>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
