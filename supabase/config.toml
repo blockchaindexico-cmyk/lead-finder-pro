@@ -2,3 +2,6 @@ project_id = "tlozfiqpydssbtflajey"
 
 [functions.search-places]
 verify_jwt = false
+
+[functions.extract-email]
+verify_jwt = false
