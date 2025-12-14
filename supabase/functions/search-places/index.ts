@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -25,82 +24,82 @@ serve(async (req) => {
       });
     }
 
-    // Step 1: Text Search to find places
+    // Step 1: Text Search (New API) to find places
+    const textSearchUrl = 'https://places.googleapis.com/v1/places:searchText';
     const searchQuery = `${keyword} in ${location}`;
-    const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
     
-    console.log('Calling Google Text Search API...');
-    const searchResponse = await fetch(textSearchUrl);
+    console.log('Calling Google Text Search API (v1)...');
+    const searchResponse = await fetch(textSearchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.types,places.rating',
+      },
+      body: JSON.stringify({
+        textQuery: searchQuery,
+        languageCode: 'en',
+        maxResultCount: Math.min(numberOfResults, 20),
+      }),
+    });
+
     const searchData = await searchResponse.json();
 
-    if (searchData.status !== 'OK' && searchData.status !== 'ZERO_RESULTS') {
-      console.error('Google API error:', searchData.status, searchData.error_message);
+    if (searchData.error) {
+      console.error('Google API error:', searchData.error);
       return new Response(JSON.stringify({ 
-        error: `Google API error: ${searchData.status}`,
-        details: searchData.error_message 
+        error: `Google API error: ${searchData.error.message}`,
+        details: searchData.error 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (searchData.status === 'ZERO_RESULTS' || !searchData.results?.length) {
+    if (!searchData.places?.length) {
       console.log('No results found');
       return new Response(JSON.stringify({ leads: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Limit results
-    const limitedResults = searchData.results.slice(0, numberOfResults);
-    console.log(`Found ${searchData.results.length} results, returning ${limitedResults.length}`);
+    const places = searchData.places.slice(0, numberOfResults);
+    console.log(`Found ${searchData.places.length} results, returning ${places.length}`);
 
-    // Step 2: Get details for each place to get contact info
+    // Step 2: Get details for each place using Place Details (New API)
     const leads = await Promise.all(
-      limitedResults.map(async (place: any) => {
+      places.map(async (place: any) => {
         try {
-          const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,website,rating,url,types&key=${apiKey}`;
-          const detailsResponse = await fetch(detailsUrl);
-          const detailsData = await detailsResponse.json();
+          const detailsUrl = `https://places.googleapis.com/v1/places/${place.id}`;
+          const detailsResponse = await fetch(detailsUrl, {
+            method: 'GET',
+            headers: {
+              'X-Goog-Api-Key': apiKey,
+              'X-Goog-FieldMask': 'id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,googleMapsUri,rating',
+            },
+          });
 
-          if (detailsData.status === 'OK') {
-            const details = detailsData.result;
-            return {
-              id: place.place_id,
-              name: details.name || place.name,
-              email: extractEmailFromWebsite(details.website) || generateContactEmail(details.name),
-              phone: details.formatted_phone_number || 'Not available',
-              website: details.website || 'Not available',
-              address: details.formatted_address || place.formatted_address,
-              category: keyword,
-              rating: details.rating || place.rating,
-              googleMapsUrl: details.url,
-            };
+          const details = await detailsResponse.json();
+
+          if (details.error) {
+            console.error(`Error fetching details for ${place.id}:`, details.error);
+            return createLeadFromBasicInfo(place, keyword);
           }
-          
-          // Fallback if details fail
+
           return {
-            id: place.place_id,
-            name: place.name,
-            email: generateContactEmail(place.name),
-            phone: 'Not available',
-            website: 'Not available',
-            address: place.formatted_address,
+            id: details.id || place.id,
+            name: details.displayName?.text || place.displayName?.text || 'Unknown',
+            email: generateContactEmail(details.displayName?.text || place.displayName?.text),
+            phone: details.internationalPhoneNumber || details.nationalPhoneNumber || 'Not available',
+            website: details.websiteUri || 'Not available',
+            address: details.formattedAddress || place.formattedAddress || 'Not available',
             category: keyword,
-            rating: place.rating,
+            rating: details.rating || place.rating,
+            googleMapsUrl: details.googleMapsUri,
           };
         } catch (error) {
-          console.error(`Error fetching details for ${place.name}:`, error);
-          return {
-            id: place.place_id,
-            name: place.name,
-            email: generateContactEmail(place.name),
-            phone: 'Not available',
-            website: 'Not available',
-            address: place.formatted_address,
-            category: keyword,
-            rating: place.rating,
-          };
+          console.error(`Error fetching details for ${place.id}:`, error);
+          return createLeadFromBasicInfo(place, keyword);
         }
       })
     );
@@ -119,7 +118,19 @@ serve(async (req) => {
   }
 });
 
-// Helper to generate a contact email based on business name
+function createLeadFromBasicInfo(place: any, keyword: string) {
+  return {
+    id: place.id,
+    name: place.displayName?.text || 'Unknown',
+    email: generateContactEmail(place.displayName?.text),
+    phone: 'Not available',
+    website: 'Not available',
+    address: place.formattedAddress || 'Not available',
+    category: keyword,
+    rating: place.rating,
+  };
+}
+
 function generateContactEmail(businessName: string): string {
   if (!businessName) return 'Not available';
   const cleanName = businessName.toLowerCase()
@@ -127,10 +138,4 @@ function generateContactEmail(businessName: string): string {
     .replace(/\s+/g, '')
     .substring(0, 20);
   return `contact@${cleanName}.com`;
-}
-
-// Placeholder for email extraction - Google Places doesn't provide emails directly
-function extractEmailFromWebsite(website: string | undefined): string | null {
-  // Note: Actually scraping websites for emails would require additional implementation
-  return null;
 }
