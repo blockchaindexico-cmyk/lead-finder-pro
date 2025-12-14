@@ -46,6 +46,71 @@ async function scrapeEmailFromWebsite(websiteUrl: string): Promise<string | null
   }
 }
 
+// Fetch places with pagination to get exact number requested
+async function fetchAllPlaces(searchQuery: string, numberOfResults: number, apiKey: string): Promise<any[]> {
+  const allPlaces: any[] = [];
+  let nextPageToken: string | null = null;
+  const maxPerRequest = 20; // Google's limit per request
+
+  while (allPlaces.length < numberOfResults) {
+    const remaining = numberOfResults - allPlaces.length;
+    const requestCount = Math.min(remaining, maxPerRequest);
+
+    const textSearchUrl = 'https://places.googleapis.com/v1/places:searchText';
+    
+    const body: any = {
+      textQuery: searchQuery,
+      languageCode: 'en',
+      maxResultCount: requestCount,
+    };
+
+    if (nextPageToken) {
+      body.pageToken = nextPageToken;
+    }
+
+    console.log(`Fetching ${requestCount} places (total so far: ${allPlaces.length})...`);
+    
+    const searchResponse = await fetch(textSearchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.types,places.rating,nextPageToken',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const searchData = await searchResponse.json();
+
+    if (searchData.error) {
+      console.error('Google API error:', searchData.error);
+      throw new Error(searchData.error.message);
+    }
+
+    if (!searchData.places?.length) {
+      console.log('No more results available');
+      break;
+    }
+
+    allPlaces.push(...searchData.places);
+    nextPageToken = searchData.nextPageToken || null;
+
+    console.log(`Fetched ${searchData.places.length} places, next token: ${nextPageToken ? 'yes' : 'no'}`);
+
+    // If no next page token, we've reached the end
+    if (!nextPageToken) {
+      break;
+    }
+
+    // Small delay to avoid rate limiting
+    if (allPlaces.length < numberOfResults && nextPageToken) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  }
+
+  return allPlaces.slice(0, numberOfResults);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -65,49 +130,31 @@ serve(async (req) => {
       });
     }
 
-    // Step 1: Text Search (New API) to find places
-    const textSearchUrl = 'https://places.googleapis.com/v1/places:searchText';
     const searchQuery = `${keyword} in ${location}`;
     
-    console.log('Calling Google Text Search API (v1)...');
-    const searchResponse = await fetch(textSearchUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.types,places.rating',
-      },
-      body: JSON.stringify({
-        textQuery: searchQuery,
-        languageCode: 'en',
-        maxResultCount: Math.min(numberOfResults, 20),
-      }),
-    });
-
-    const searchData = await searchResponse.json();
-
-    if (searchData.error) {
-      console.error('Google API error:', searchData.error);
+    // Fetch all places with pagination
+    let places: any[];
+    try {
+      places = await fetchAllPlaces(searchQuery, numberOfResults, apiKey);
+    } catch (error) {
       return new Response(JSON.stringify({ 
-        error: `Google API error: ${searchData.error.message}`,
-        details: searchData.error 
+        error: `Google API error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (!searchData.places?.length) {
+    if (places.length === 0) {
       console.log('No results found');
       return new Response(JSON.stringify({ leads: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const places = searchData.places.slice(0, numberOfResults);
-    console.log(`Found ${searchData.places.length} results, returning ${places.length}`);
+    console.log(`Found ${places.length} total places`);
 
-    // Step 2: Get details for each place and try quick email scraping
+    // Get details for each place and try quick email scraping
     const leads = await Promise.all(
       places.map(async (place: any) => {
         try {
@@ -142,7 +189,7 @@ serve(async (req) => {
           return {
             id: details.id || place.id,
             name: details.displayName?.text || place.displayName?.text || 'Unknown',
-            email: email, // null if not found, user can use Firecrawl button
+            email: email,
             phone: details.internationalPhoneNumber || details.nationalPhoneNumber || 'Not available',
             website: websiteUrl || 'Not available',
             address: details.formattedAddress || place.formattedAddress || 'Not available',
