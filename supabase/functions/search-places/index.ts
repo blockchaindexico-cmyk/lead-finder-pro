@@ -5,6 +5,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+async function extractEmailFromWebsite(websiteUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/extract-email`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ websiteUrl }),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data.email || null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error extracting email:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -86,12 +111,21 @@ serve(async (req) => {
             return createLeadFromBasicInfo(place, keyword);
           }
 
+          const websiteUrl = details.websiteUri;
+          let email: string | null = null;
+
+          // Try to extract email from website if available
+          if (websiteUrl && websiteUrl !== 'Not available') {
+            console.log(`Extracting email from: ${websiteUrl}`);
+            email = await extractEmailFromWebsite(websiteUrl);
+          }
+
           return {
             id: details.id || place.id,
             name: details.displayName?.text || place.displayName?.text || 'Unknown',
-            email: generateContactEmail(details.displayName?.text || place.displayName?.text),
+            email: email || 'Not available',
             phone: details.internationalPhoneNumber || details.nationalPhoneNumber || 'Not available',
-            website: details.websiteUri || 'Not available',
+            website: websiteUrl || 'Not available',
             address: details.formattedAddress || place.formattedAddress || 'Not available',
             category: keyword,
             rating: details.rating || place.rating,
@@ -122,20 +156,11 @@ function createLeadFromBasicInfo(place: any, keyword: string) {
   return {
     id: place.id,
     name: place.displayName?.text || 'Unknown',
-    email: generateContactEmail(place.displayName?.text),
+    email: 'Not available',
     phone: 'Not available',
     website: 'Not available',
     address: place.formattedAddress || 'Not available',
     category: keyword,
     rating: place.rating,
   };
-}
-
-function generateContactEmail(businessName: string): string {
-  if (!businessName) return 'Not available';
-  const cleanName = businessName.toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, '')
-    .substring(0, 20);
-  return `contact@${cleanName}.com`;
 }
