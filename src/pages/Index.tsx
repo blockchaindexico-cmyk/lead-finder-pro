@@ -13,7 +13,6 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const handleSearch = async (params: SearchParams) => {
     setIsLoading(true);
