@@ -24,7 +24,7 @@ const ITEMS_PER_PAGE = 30;
 
 export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const { isLeadSaved, saveLead, removeLead } = useSavedLeads();
+  
 
   // Reset to page 1 when leads change
   useEffect(() => {
