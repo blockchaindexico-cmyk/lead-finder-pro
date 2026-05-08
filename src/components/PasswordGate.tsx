@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 // Change this password to set your own access password
-const ACCESS_PASSWORD = process.env.APP_ACCESS_PASSWORD || "admin";
+const ACCESS_PASSWORD = import.meta.env.VITE_APP_ACCESS_PASSWORD || "admin";
 
 const STORAGE_KEY = "site_access_granted";
 
