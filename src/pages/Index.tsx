@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Zap, Database, Shield } from "lucide-react";
+import { Zap, Database, Shield, LogOut } from "lucide-react";
 import { SearchForm } from "@/components/SearchForm";
 import { LeadsGrid } from "@/components/LeadsGrid";
-import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { lockSite } from "@/components/PasswordGate";
 import { Lead, SearchParams } from "@/types/lead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +13,6 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const handleSearch = async (params: SearchParams) => {
     setIsLoading(true);
@@ -98,13 +95,10 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Business Lead Generator</p>
               </div>
             </div>
-            {user ? (
-              <UserMenu />
-            ) : (
-              <Button asChild variant="outline" size="sm">
-                <Link to="/auth">Sign In</Link>
-              </Button>
-            )}
+            <Button variant="outline" size="sm" onClick={lockSite}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Lock
+            </Button>
           </div>
         </div>
       </header>
