@@ -95,13 +95,10 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Business Lead Generator</p>
               </div>
             </div>
-            {user ? (
-              <UserMenu />
-            ) : (
-              <Button asChild variant="outline" size="sm">
-                <Link to="/auth">Sign In</Link>
-              </Button>
-            )}
+            <Button variant="outline" size="sm" onClick={lockSite}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Lock
+            </Button>
           </div>
         </div>
       </header>
