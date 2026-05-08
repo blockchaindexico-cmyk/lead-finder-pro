@@ -3,7 +3,7 @@ import { Lead } from "@/types/lead";
 import { LeadCard } from "./LeadCard";
 import { FileSearch, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSavedLeads } from "@/hooks/useSavedLeads";
+
 import {
   Pagination,
   PaginationContent,
