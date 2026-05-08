@@ -165,9 +165,6 @@ export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
             key={lead.id} 
             lead={lead} 
             index={(currentPage - 1) * ITEMS_PER_PAGE + index} 
-            isSaved={isLeadSaved(lead)}
-            onSave={saveLead}
-            onRemove={removeLead}
           />
         ))}
       </div>
