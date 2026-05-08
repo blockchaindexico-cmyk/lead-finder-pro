@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Zap, Database, Shield, LogOut } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Zap, Database, Shield, LogOut, Bookmark } from "lucide-react";
 import { SearchForm } from "@/components/SearchForm";
 import { LeadsGrid } from "@/components/LeadsGrid";
 import { Button } from "@/components/ui/button";
@@ -95,10 +96,18 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Business Lead Generator</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={lockSite}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Lock
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/saved">
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Saved
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={lockSite}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Lock
+              </Button>
+            </div>
           </div>
         </div>
       </header>
