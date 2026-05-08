@@ -3,7 +3,7 @@ import { Lead } from "@/types/lead";
 import { LeadCard } from "./LeadCard";
 import { FileSearch, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSavedLeads } from "@/hooks/useSavedLeads";
+
 import {
   Pagination,
   PaginationContent,
@@ -24,7 +24,7 @@ const ITEMS_PER_PAGE = 30;
 
 export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const { isLeadSaved, saveLead, removeLead } = useSavedLeads();
+  
 
   // Reset to page 1 when leads change
   useEffect(() => {
@@ -164,10 +164,8 @@ export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
           <LeadCard 
             key={lead.id} 
             lead={lead} 
-            index={(currentPage - 1) * ITEMS_PER_PAGE + index} 
-            isSaved={isLeadSaved(lead)}
-            onSave={saveLead}
-            onRemove={removeLead}
+            index={(currentPage - 1) * ITEMS_PER_PAGE + index}
+            showSaveButton={false}
           />
         ))}
       </div>
