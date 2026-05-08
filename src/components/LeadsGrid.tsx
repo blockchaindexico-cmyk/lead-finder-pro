@@ -164,7 +164,8 @@ export function LeadsGrid({ leads, isLoading, hasSearched }: LeadsGridProps) {
           <LeadCard 
             key={lead.id} 
             lead={lead} 
-            index={(currentPage - 1) * ITEMS_PER_PAGE + index} 
+            index={(currentPage - 1) * ITEMS_PER_PAGE + index}
+            showSaveButton={false}
           />
         ))}
       </div>
